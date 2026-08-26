@@ -4,7 +4,7 @@
 ![motio demo](docs/demo.gif)
 
 [![Live demo](https://img.shields.io/badge/live-demo-6ee7b7?style=flat-square)](https://boflyeta.github.io/Motio/demo/)
-[![npm](https://img.shields.io/npm/v/motio?style=flat-square)](https://www.npmjs.com/package/motio)
+[![npm](https://img.shields.io/npm/v/%40boflyeta%2Fmotio?style=flat-square)](https://www.npmjs.com/package/@boflyeta/motio)
 [![CI](https://github.com/BoflyEta/Motio/actions/workflows/ci.yml/badge.svg)](https://github.com/BoflyEta/Motio/actions/workflows/ci.yml)
 [![dependencies](https://img.shields.io/badge/dependencies-0-6ee7b7?style=flat-square)](package.json)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
@@ -25,11 +25,11 @@ falls out of them.
 ## Quick start
 
 ```bash
-npm install motio
+npm install @boflyeta/motio
 ```
 
 ```js
-import { fadeIn, timeline, slideIn } from 'motio';
+import { fadeIn, timeline, slideIn } from '@boflyeta/motio';
 
 fadeIn('.card', { stagger: 80 });
 ```

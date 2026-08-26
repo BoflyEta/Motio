@@ -59,7 +59,7 @@ const demos = [
     title: 'fadeIn',
     blurb: 'Opacity only, staggered across the row. One tween drives all four.',
     stage: chips(4),
-    code: `import { fadeIn } from 'motio';
+    code: `import { fadeIn } from '@boflyeta/motio';
 
 fadeIn('.chip', { stagger: 90, duration: 520 });`,
     run(stage) {
@@ -72,7 +72,7 @@ fadeIn('.chip', { stagger: 90, duration: 520 });`,
     title: 'fadeOut',
     blurb: 'The same driver in reverse. Ends at opacity 0 and stays there.',
     stage: chips(4),
-    code: `import { fadeOut } from 'motio';
+    code: `import { fadeOut } from '@boflyeta/motio';
 
 fadeOut('.chip', { stagger: 90, duration: 520 });`,
     run(stage) {
@@ -85,7 +85,7 @@ fadeOut('.chip', { stagger: 90, duration: 520 });`,
     title: 'slideIn',
     blurb: 'Translate plus fade, from any of four directions. Never touches top or left.',
     stage: bars(['100%', '78%', '54%']),
-    code: `import { slideIn } from 'motio';
+    code: `import { slideIn } from '@boflyeta/motio';
 
 slideIn('.bar', {
   direction: 'up',
@@ -107,7 +107,7 @@ slideIn('.bar', {
     title: 'scaleIn',
     blurb: 'Scale and fade together, with a back-eased overshoot on arrival.',
     stage: '<div class="box"></div>',
-    code: `import { scaleIn } from 'motio';
+    code: `import { scaleIn } from '@boflyeta/motio';
 
 scaleIn('.box', {
   from: 0.4,
@@ -129,7 +129,7 @@ scaleIn('.box', {
     blurb:
       'A real damped oscillator, simulated once up front. Its duration comes out of the physics.',
     stage: '<div class="box"></div>',
-    code: `import { spring } from 'motio';
+    code: `import { spring } from '@boflyeta/motio';
 
 const controls = spring('.box', {
   from: { scale: 0.45, y: 26 },
@@ -153,7 +153,7 @@ controls.duration; // derived, not chosen`,
     blurb:
       'Shuffles the DOM, then animates the difference with transforms. No layout per frame.',
     stage: `<ul class="tiles">${[1, 2, 3, 4, 5, 6].map((n) => `<li>${n}</li>`).join('')}</ul>`,
-    code: `import { flipList } from 'motio';
+    code: `import { flipList } from '@boflyeta/motio';
 
 flipList('.tiles li', {
   duration: 480,
@@ -182,7 +182,7 @@ flipList('.tiles li', {
         <circle cx="50" cy="50" r="38"></circle>
         <path d="M32 52 L45 65 L69 38"></path>
       </svg>`,
-    code: `import { drawSVG } from 'motio';
+    code: `import { drawSVG } from '@boflyeta/motio';
 
 drawSVG('svg circle, svg path', {
   duration: 900,
@@ -206,7 +206,7 @@ drawSVG('svg circle, svg path', {
         <div class="scrub-track"><div class="scrub-fill"></div></div>
         <p class="scrub-label">scroll the page &mdash; <b>0%</b></p>
       </div>`,
-    code: `import { scrollScrub } from 'motio';
+    code: `import { scrollScrub } from '@boflyeta/motio';
 
 scrollScrub('.panel', {
   onUpdate: (progress) => {
@@ -229,7 +229,7 @@ scrollScrub('.panel', {
     title: 'textScramble',
     blurb: 'Decodes from noise. The real string sits on aria-label while it settles.',
     stage: '<p class="mono-text">CONNECTED</p>',
-    code: `import { textScramble } from 'motio';
+    code: `import { textScramble } from '@boflyeta/motio';
 
 textScramble('.status', {
   text: 'CONNECTED',
@@ -246,7 +246,7 @@ textScramble('.status', {
     blurb:
       'Per-character reveal. Spans are aria-hidden and the sentence stays on the container.',
     stage: '<h3 class="headline">Motion with intent</h3>',
-    code: `import { splitText } from 'motio';
+    code: `import { splitText } from '@boflyeta/motio';
 
 splitText('.headline', {
   stagger: 26,
@@ -267,7 +267,7 @@ splitText('.headline', {
       'Follows the pointer with frame-rate-independent smoothing, and unsubscribes at rest.',
     manual: true,
     stage: '<button class="magnet" type="button">Point at me</button>',
-    code: `import { magneticHover } from 'motio';
+    code: `import { magneticHover } from '@boflyeta/motio';
 
 const magnet = magneticHover('.cta', {
   strength: 0.42,
@@ -284,7 +284,7 @@ magnet.cancel(); // unbinds and resets`,
     title: 'particleBurst',
     blurb: 'Canvas, not DOM nodes — 70 particles is one element instead of seventy layers.',
     stage: '<button class="magnet" type="button">Burst</button>',
-    code: `import { particleBurst } from 'motio';
+    code: `import { particleBurst } from '@boflyeta/motio';
 
 button.addEventListener('click', () => {
   particleBurst(button, { count: 70, spread: Math.PI });
@@ -302,7 +302,7 @@ button.addEventListener('click', () => {
     title: 'counter',
     blurb: 'Tabular figures so nothing reflows, and the final value announced once.',
     stage: '<p class="stat">0</p>',
-    code: `import { counter } from 'motio';
+    code: `import { counter } from '@boflyeta/motio';
 
 counter('.stat', {
   to: 12480,
@@ -320,7 +320,7 @@ counter('.stat', {
     title: 'timeline',
     blurb: 'Sequencing with relative offsets. The whole thing costs one subscription.',
     stage: bars(['100%', '72%', '48%']),
-    code: `import { timeline, slideIn, fadeIn } from 'motio';
+    code: `import { timeline, slideIn, fadeIn } from '@boflyeta/motio';
 
 timeline()
   .add('.bar', slideIn, { direction: 'left', stagger: 90 })
@@ -342,7 +342,7 @@ timeline()
     title: 'tween',
     blurb: 'The primitive underneath all of it. Knows nothing about the DOM.',
     stage: '<div class="box"></div>',
-    code: `import { tween } from 'motio';
+    code: `import { tween } from '@boflyeta/motio';
 
 tween({
   from: { x: -70, rotate: -90, opacity: 0 },

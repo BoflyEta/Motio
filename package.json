@@ -1,10 +1,13 @@
 {
-  "name": "motio",
+  "name": "@boflyeta/motio",
   "version": "0.1.0",
   "description": "Zero-dependency JavaScript animation library. One shared rAF ticker, transform/opacity-only presets, FLIP layout animation, and first-class reduced-motion support.",
   "type": "module",
   "sideEffects": false,
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "animation",
     "tween",
