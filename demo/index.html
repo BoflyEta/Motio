@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Motio — a zero-dependency animation library</title>
+    <meta
+      name="description"
+      content="Motio is a zero-dependency JavaScript animation library: one shared rAF ticker, transform and opacity only, FLIP layout animation, and reduced motion support built in."
+    />
+    <link rel="stylesheet" href="./demo.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%A1</text></svg>"
+    />
+  </head>
+  <body>
+    <a class="skip" href="#gallery">Skip to the animations</a>
+
+    <header class="hero">
+      <div class="shell">
+        <p class="eyebrow">
+          <span class="dot"></span> zero dependencies · 9.7&nbsp;kB gzipped · ESM
+        </p>
+        <h1 id="hero-title">Motio</h1>
+        <p class="lede">
+          A small animation library built on one shared <code>requestAnimationFrame</code> loop.
+          Presets touch only <code>transform</code> and <code>opacity</code>, layout changes go
+          through FLIP, and reduced motion is handled rather than bolted on.
+        </p>
+
+        <div class="hero-actions">
+          <a class="button primary" href="https://github.com/your-name/motio">GitHub</a>
+          <a class="button" href="https://www.npmjs.com/package/motio">npm</a>
+        </div>
+
+        <div class="controls" role="group" aria-label="Demo controls">
+          <label class="switch">
+            <input type="checkbox" id="reduce-motion" />
+            <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+            <span class="switch-label">Reduce motion</span>
+          </label>
+          <p class="ticker-readout">
+            ticker subscribers <b id="subscriber-count">0</b>
+            <span class="hint">one loop drives every card on this page</span>
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell" id="gallery">
+      <p class="gallery-note">
+        Every card plays on hover or tap, and again on <em>Replay</em>. Open <em>Code</em> for the
+        exact call that produced it.
+      </p>
+      <div class="grid" id="grid"></div>
+      <noscript>
+        <p class="gallery-note">This gallery needs JavaScript — it is running the real library.</p>
+      </noscript>
+    </main>
+
+    <footer class="shell">
+      <p>
+        MIT licensed. Built with no runtime dependencies and no build step — this page imports
+        <code>../src/index.js</code> directly.
+      </p>
+    </footer>
+
+    <script type="module" src="./demo.js"></script>
+  </body>
+</html>

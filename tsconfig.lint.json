@@ -1,0 +1,12 @@
+{
+  "$comment": "Type-checks the published surface without emitting. Tests are excluded on purpose: several of them pass deliberately wrong types to assert the runtime errors, so strict checking would fight what they exist to prove.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "emitDeclarationOnly": false,
+    "declaration": false,
+    "declarationMap": false,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.js"]
+}

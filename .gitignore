@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.env
+.env.local
+*.tgz
+
+# Claude Code local config
+.claude/

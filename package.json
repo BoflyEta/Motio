@@ -1,0 +1,51 @@
+{
+  "name": "motio",
+  "version": "0.1.0",
+  "description": "Zero-dependency JavaScript animation library. One shared rAF ticker, transform/opacity-only presets, FLIP layout animation, and first-class reduced-motion support.",
+  "type": "module",
+  "sideEffects": false,
+  "license": "MIT",
+  "keywords": [
+    "animation",
+    "tween",
+    "easing",
+    "flip",
+    "spring",
+    "requestanimationframe",
+    "zero-dependency"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc -p tsconfig.lint.json",
+    "types": "tsc -p tsconfig.json",
+    "bundle": "esbuild src/index.js --bundle --format=esm --minify --outfile=dist/motio.min.js",
+    "build": "npm run types && npm run bundle",
+    "demo": "npx --yes serve -l 5173 .",
+    "prepublishOnly": "npm run lint && npm test && npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
