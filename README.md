@@ -3,9 +3,9 @@
 <!-- Record a screen capture of the demo gallery and drop it in as docs/demo.gif -->
 ![motio demo](docs/demo.gif)
 
-[![Live demo](https://img.shields.io/badge/live-demo-6ee7b7?style=flat-square)](https://your-name.github.io/motio/demo/)
+[![Live demo](https://img.shields.io/badge/live-demo-6ee7b7?style=flat-square)](https://boflyeta.github.io/Motio/demo/)
 [![npm](https://img.shields.io/npm/v/motio?style=flat-square)](https://www.npmjs.com/package/motio)
-[![CI](https://github.com/your-name/motio/actions/workflows/ci.yml/badge.svg)](https://github.com/your-name/motio/actions/workflows/ci.yml)
+[![CI](https://github.com/BoflyEta/Motio/actions/workflows/ci.yml/badge.svg)](https://github.com/BoflyEta/Motio/actions/workflows/ci.yml)
 [![dependencies](https://img.shields.io/badge/dependencies-0-6ee7b7?style=flat-square)](package.json)
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 

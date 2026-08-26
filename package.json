@@ -41,11 +41,21 @@
     "bundle": "esbuild src/index.js --bundle --format=esm --minify --outfile=dist/motio.min.js",
     "build": "npm run types && npm run bundle",
     "demo": "npx --yes serve -l 5173 .",
-    "prepublishOnly": "npm run lint && npm test && npm run build"
+    "prepublishOnly": "npm run lint && npm test",
+    "prepack": "npm run build"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
     "typescript": "^5.8.0",
     "vitest": "^3.2.0"
+  },
+  "author": "Bofly Eta",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BoflyEta/Motio.git"
+  },
+  "homepage": "https://boflyeta.github.io/Motio/demo/",
+  "bugs": {
+    "url": "https://github.com/BoflyEta/Motio/issues"
   }
 }

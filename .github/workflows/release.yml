@@ -1,0 +1,45 @@
+name: Publish to npm
+
+# Publishing is driven by GitHub Releases: cutting a release named v0.1.0
+# publishes 0.1.0. Nothing is published on an ordinary push.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Required so npm can attach a provenance attestation to the tarball.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      # A tag that disagrees with package.json publishes the wrong version
+      # under the right-looking release, so fail loudly instead.
+      - name: Check the release tag matches package.json
+        if: github.event_name == 'release'
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "Release tag $GITHUB_REF_NAME does not match package.json version $pkg." >&2
+            exit 1
+          fi
+
+      # prepublishOnly lints and tests; prepack builds dist/ into the tarball.
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

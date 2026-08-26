@@ -1,0 +1,56 @@
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Lets you redeploy the current main without pushing a commit.
+  workflow_dispatch:
+
+# Pages needs to read the repo and mint an OIDC token for the deploy step.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; the newer commit is the one worth publishing.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The demo loads the library straight from source (../src/index.js),
+      # so the site is demo/ plus src/ — no bundler in the loop.
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp -r demo src _site/
+          # Stop Pages from running the files through Jekyll.
+          touch _site/.nojekyll
+          # The demo lives at /demo/; send the bare Pages URL there.
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8" />
+          <title>Motio</title>
+          <meta http-equiv="refresh" content="0; url=./demo/" />
+          <link rel="canonical" href="./demo/" />
+          <p><a href="./demo/">Continue to the Motio demo</a>.</p>
+          HTML
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
