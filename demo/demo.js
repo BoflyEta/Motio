@@ -940,19 +940,36 @@ document.getElementById('reset-settings').addEventListener('click', () => {
 });
 
 /*
- * The settings markup ships open so it works without JavaScript, and collapses
- * only where the screen is too narrow to show it and the preview at once.
- * Above the breakpoint the summary is hidden, so it must be forced open again.
+ * The settings ship open in the markup and collapse only where the screen is
+ * too narrow to show them and the preview at once.
+ *
+ * This follows the viewport rather than reading it once at load, because a
+ * window that starts narrow and is widened would otherwise keep a collapsed
+ * panel it no longer needs. Once the reader opens or closes it themselves that
+ * choice sticks, and because the summary is on screen at every width, a wrong
+ * guess here is one click to undo rather than a panel with no way back.
  */
 const settingsDisclosure = /** @type {HTMLDetailsElement} */ (
   document.getElementById('settings-disclosure')
 );
-const wide = matchMedia('(min-width: 821px)');
+const narrow = matchMedia('(max-width: 820px)');
+let chosenByReader = false;
+/** What the last automatic sync set, so a manual toggle can be told apart. */
+let autoState = null;
+
+// `toggle` is queued rather than dispatched synchronously, so the two are
+// distinguished by comparing state, not by a flag set around the assignment.
+settingsDisclosure.addEventListener('toggle', () => {
+  if (settingsDisclosure.open !== autoState) chosenByReader = true;
+});
+
 const syncDisclosure = () => {
-  if (wide.matches) settingsDisclosure.open = true;
+  if (chosenByReader) return;
+  autoState = !narrow.matches;
+  settingsDisclosure.open = autoState;
 };
-wide.addEventListener('change', syncDisclosure);
-settingsDisclosure.open = wide.matches;
+narrow.addEventListener('change', syncDisclosure);
+syncDisclosure();
 
 const reduceToggle = /** @type {HTMLInputElement} */ (document.getElementById('reduce-motion'));
 reduceToggle.checked = prefersReducedMotion();

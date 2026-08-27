@@ -236,12 +236,45 @@ main {
 }
 
 /*
- * On wide screens the disclosure is always open and its summary is out of the
- * way, so the controls read as a plain toolbar. Narrow screens get the
- * collapsed version, which keeps the preview near the top of the page.
+ * The summary is visible at every width, and the panel ships open in the
+ * markup. An earlier version hid the summary above the breakpoint and let
+ * JavaScript drive `open`; when the two disagreed the settings vanished with
+ * no control left to bring them back. Now the worst case is a panel that is
+ * open when it could have been collapsed.
  */
 .settings-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+.settings-disclosure > summary::-webkit-details-marker {
   display: none;
+}
+.settings-disclosure > summary::after {
+  content: "Show";
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.settings-disclosure[open] > summary {
+  margin-bottom: 12px;
+}
+.settings-disclosure[open] > summary::after {
+  content: "Hide";
 }
 
 .settings {
@@ -581,7 +614,13 @@ input[type="range"]::-moz-range-thumb {
   overflow: hidden;
 }
 
-.stage--large {
+/*
+ * Doubled up on purpose. The base `.stage` rule lives further down in the
+ * gallery section, and at equal specificity the later rule would win — so a
+ * single `.stage--large` here would silently lose its height to the 168px
+ * card stage.
+ */
+.stage.stage--large {
   height: clamp(280px, 44vh, 440px);
   border-bottom: 1px solid var(--line);
 }
@@ -955,41 +994,6 @@ footer {
 }
 
 @media (max-width: 820px) {
-  .settings-disclosure > summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 12px 16px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--bg-raised);
-    color: var(--text);
-    font-size: 14.5px;
-    font-weight: 550;
-    cursor: pointer;
-    list-style: none;
-  }
-  .settings-disclosure > summary::-webkit-details-marker {
-    display: none;
-  }
-  .settings-disclosure > summary::after {
-    content: "Show";
-    color: var(--accent-text);
-    font-size: 12.5px;
-    font-weight: 500;
-  }
-  .settings-disclosure[open] > summary {
-    border-radius: var(--radius) var(--radius) 0 0;
-    border-bottom-color: transparent;
-  }
-  .settings-disclosure[open] > summary::after {
-    content: "Hide";
-  }
-  .settings-disclosure[open] .settings {
-    padding-top: 12px;
-  }
-
   .preview {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1026,7 +1030,7 @@ footer {
   .stage {
     height: 150px;
   }
-  .stage--large {
+  .stage.stage--large {
     height: clamp(240px, 48vh, 340px);
   }
   .preview-actions {
