@@ -8,6 +8,7 @@
       name="description"
       content="Motio is a zero-dependency JavaScript animation library: one shared rAF ticker, transform and opacity only, FLIP layout animation, and reduced motion support built in."
     />
+    <meta name="theme-color" content="#6ee7b7" />
     <link rel="stylesheet" href="./demo.css" />
     <link
       rel="icon"
@@ -15,7 +16,7 @@
     />
   </head>
   <body>
-    <a class="skip" href="#gallery">Skip to the animations</a>
+    <a class="skip" href="#playground">Skip to the playground</a>
 
     <header class="hero">
       <div class="shell">
@@ -30,33 +31,161 @@
         </p>
 
         <div class="hero-actions">
-          <a class="button primary" href="https://github.com/BoflyEta/Motio">GitHub</a>
+          <a class="button primary" href="#playground">Try it</a>
+          <a class="button" href="https://github.com/BoflyEta/Motio">GitHub</a>
           <a class="button" href="https://www.npmjs.com/package/@boflyeta/motio">npm</a>
-        </div>
-
-        <div class="controls" role="group" aria-label="Demo controls">
-          <label class="switch">
-            <input type="checkbox" id="reduce-motion" />
-            <span class="track" aria-hidden="true"><span class="thumb"></span></span>
-            <span class="switch-label">Reduce motion</span>
-          </label>
-          <p class="ticker-readout">
-            ticker subscribers <b id="subscriber-count">0</b>
-            <span class="hint">one loop drives every card on this page</span>
-          </p>
         </div>
       </div>
     </header>
 
-    <main class="shell" id="gallery">
-      <p class="gallery-note">
-        Every card plays on hover or tap, and again on <em>Replay</em>. Open <em>Code</em> for the
-        exact call that produced it.
-      </p>
-      <div class="grid" id="grid"></div>
-      <noscript>
-        <p class="gallery-note">This gallery needs JavaScript — it is running the real library.</p>
-      </noscript>
+    <main id="main">
+      <!-- ---------- playground ---------- -->
+      <section class="playground shell" id="playground" aria-labelledby="playground-title">
+        <div class="section-head">
+          <h2 id="playground-title">Playground</h2>
+          <p>
+            Pick a preset, then change the colour and the speed. Every setting applies to the
+            preview <em>and</em> to the gallery below, and the snippet updates to match.
+          </p>
+        </div>
+
+        <!--
+          Open by default so the controls are there without JavaScript and on
+          wide screens; demo.js collapses it on narrow ones, where the settings
+          would otherwise push the preview off the screen.
+        -->
+        <details class="settings-disclosure" id="settings-disclosure" open>
+          <summary>Colour, speed &amp; motion</summary>
+          <form class="settings" id="settings" aria-label="Animation settings">
+          <fieldset class="setting setting-color">
+            <legend>Colour</legend>
+            <div class="swatches" id="swatches" role="radiogroup" aria-label="Preset colours"></div>
+            <label class="custom-color" for="color-input">
+              <input type="color" id="color-input" value="#6ee7b7" aria-label="Custom colour" />
+              <span class="custom-color-label" aria-hidden="true">
+                Custom
+                <b id="color-value">#6EE7B7</b>
+              </span>
+            </label>
+            <p class="setting-hint">
+              Motio animates <code>transform</code> and <code>opacity</code> only — colour stays in
+              your CSS.
+            </p>
+          </fieldset>
+
+          <fieldset class="setting setting-speed">
+            <legend>
+              Speed <output id="speed-value" for="speed-input">1.00&times;</output>
+            </legend>
+            <label class="sr-only" for="speed-input">Animation speed multiplier</label>
+            <input
+              type="range"
+              id="speed-input"
+              min="-2"
+              max="2"
+              step="0.05"
+              value="0"
+              aria-describedby="speed-hint"
+              aria-valuetext="1.00 times"
+            />
+            <div class="speed-marks" aria-hidden="true">
+              <span>0.25&times;</span><span>1&times;</span><span>4&times;</span>
+            </div>
+            <div class="speed-presets">
+              <button class="chip-button" type="button" data-speed="0.5">0.5&times;</button>
+              <button class="chip-button" type="button" data-speed="1">1&times;</button>
+              <button class="chip-button" type="button" data-speed="2">2&times;</button>
+            </div>
+            <p class="setting-hint" id="speed-hint">
+              A multiplier on every duration, delay and stagger the page passes in.
+            </p>
+          </fieldset>
+
+          <fieldset class="setting setting-motion">
+            <legend>Motion</legend>
+            <label class="switch">
+              <input type="checkbox" id="reduce-motion" aria-labelledby="reduce-motion-label" />
+              <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+              <span class="switch-label" id="reduce-motion-label">Reduce motion</span>
+            </label>
+            <p class="ticker-readout">
+              ticker subscribers <b id="subscriber-count">0</b>
+            </p>
+            <p class="setting-hint">
+              One <code>rAF</code> loop drives every animation on this page. Reduced motion snaps
+              presets to their end state instead of playing them.
+            </p>
+            <button class="chip-button reset-all" type="button" id="reset-settings">
+              Reset settings
+            </button>
+          </fieldset>
+          </form>
+        </details>
+
+        <!-- preview -->
+        <div class="preview">
+          <div class="preset-rail">
+            <h3 class="rail-title" id="preset-rail-title">Presets</h3>
+            <div
+              class="preset-list"
+              id="preset-list"
+              role="tablist"
+              aria-labelledby="preset-rail-title"
+            ></div>
+          </div>
+
+          <div class="preview-main">
+            <div
+              class="stage stage--large"
+              id="preview-stage"
+              role="tabpanel"
+              tabindex="0"
+              aria-labelledby="preview-title"
+            ></div>
+
+            <div class="preview-bar">
+              <div class="preview-meta">
+                <h3 id="preview-title">fadeIn</h3>
+                <p id="preview-blurb"></p>
+              </div>
+              <div class="preview-actions">
+                <button class="button primary" type="button" id="preview-replay">
+                  Replay <kbd>R</kbd>
+                </button>
+                <button
+                  class="button"
+                  type="button"
+                  id="preview-code-toggle"
+                  aria-expanded="true"
+                  aria-controls="preview-code"
+                >
+                  Hide code
+                </button>
+              </div>
+            </div>
+
+            <div class="code preview-code" id="preview-code">
+              <button class="chip-button copy" type="button" id="preview-copy">Copy</button>
+              <pre><code id="preview-code-text"></code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- gallery ---------- -->
+      <section class="gallery shell" id="gallery" aria-labelledby="gallery-title">
+        <div class="section-head">
+          <h2 id="gallery-title">Every preset</h2>
+          <p>
+            Each card plays on hover or tap, and again on <em>Replay</em>. <em>Open</em> loads it
+            into the big preview above.
+          </p>
+        </div>
+        <div class="grid" id="grid"></div>
+        <noscript>
+          <p class="setting-hint">This page needs JavaScript — it is running the real library.</p>
+        </noscript>
+      </section>
     </main>
 
     <footer class="shell">
