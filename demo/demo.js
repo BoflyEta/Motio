@@ -17,6 +17,7 @@ import {
   fadeIn,
   fadeOut,
   flipList,
+  forget,
   magneticHover,
   onReducedMotionChange,
   particleBurst,
@@ -339,6 +340,73 @@ controls.duration; // derived, not chosen`,
     },
   },
   {
+    id: 'interruption',
+    title: 'interruption',
+    blurb:
+      'Both boxes are caught mid-slide and sprung to the same place. The left one keeps the speed it already had; the right one starts from rest and stalls for a beat.',
+    stage: `<div class="lanes">
+      <div class="lane">
+        <div class="lane-track"><div class="chip"></div></div>
+        <span class="lane-label"><b>'inherit'</b>keeps its speed</span>
+      </div>
+      <div class="lane">
+        <div class="lane-track"><div class="chip"></div></div>
+        <span class="lane-label"><b>0</b>starts from rest</span>
+      </div>
+    </div>`,
+    code: () => `import { slideIn, spring } from '@boflyeta/motio';
+
+slideIn('.chip', { direction: 'up', distance: 70, duration: ${t(600)} });
+
+// Interrupt it halfway. 'current' picks up the position it reached,
+// 'inherit' the speed it was travelling at when you took it over.
+setTimeout(() => {
+  spring('.chip', {
+    from: 'current',
+    to: { y: 0 },
+    velocity: 'inherit',
+    stiffness: ${handoffStiffness()},
+    damping: 16,
+  });
+}, ${t(300)});`,
+    run(stage) {
+      reset(stage, '.chip');
+      const [carried, fromRest] = stage.querySelectorAll('.chip');
+      // A replay is a new motion rather than a continuation of the cancelled
+      // one, so last run's samples and channel claims go with it.
+      forget(carried);
+      forget(fromRest);
+
+      const slide = slideIn([carried, fromRest], {
+        direction: 'up',
+        distance: 70,
+        duration: t(600),
+        fade: false,
+        easing: 'linear',
+      });
+
+      /** @type {{ cancel: () => void }[]} */
+      let handoff = [];
+      const physics = { stiffness: handoffStiffness(), damping: 16 };
+
+      // Halfway through, while both are still travelling at the same speed.
+      const timer = setTimeout(() => {
+        handoff = [
+          spring(carried, { ...physics, from: 'current', to: { y: 0 }, velocity: 'inherit' }),
+          spring(fromRest, { ...physics, from: 'current', to: { y: 0 }, velocity: 0 }),
+        ];
+      }, t(300));
+
+      return {
+        cancel() {
+          clearTimeout(timer);
+          slide.cancel();
+          for (const controls of handoff) controls.cancel();
+        },
+      };
+    },
+  },
+  {
     id: 'flipList',
     title: 'flipList',
     blurb: 'Shuffles the DOM, then animates the difference with transforms. No layout per frame.',
@@ -589,6 +657,16 @@ tween({
  */
 function springStiffness() {
   return Math.round(210 * settings.speed ** 2);
+}
+
+/**
+ * The interruption demo wants a softer spring than the spring demo does.
+ * A stiff spring accelerates hard enough on its own that its first frame looks
+ * fast whether or not it inherited anything, which is exactly the difference
+ * the demo exists to show. Scaled by the same square law for the same reason.
+ */
+function handoffStiffness() {
+  return Math.round(110 * settings.speed ** 2);
 }
 
 const byId = new Map(demos.map((demo) => [demo.id, demo]));

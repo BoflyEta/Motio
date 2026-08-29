@@ -5,7 +5,7 @@
  */
 
 import { elementTween } from './shared.js';
-import { setTransform, clearTransform } from '../utils/dom.js';
+import { setTransform, clearTransform, setOpacity } from '../utils/dom.js';
 
 /**
  * @typedef {import('../utils/dom.js').Target} Target
@@ -66,10 +66,11 @@ export function slideIn(target, options = {}) {
     rest,
     (el, eased) => {
       setTransform(el, { [spec.axis]: start * (1 - eased) });
-      if (fade) el.style.opacity = String(eased);
+      if (fade) setOpacity(el, eased);
     },
     {
       willChange: fade ? ['transform', 'opacity'] : ['transform'],
+      channels: fade ? [spec.axis, 'opacity'] : [spec.axis],
       // The element ends at its natural position, so the inline transform is
       // identity and pure overhead. Worse than overhead, actually: a transform
       // on an element establishes a containing block for fixed-position

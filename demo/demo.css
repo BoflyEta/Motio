@@ -1057,3 +1057,55 @@ footer {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ---------- interruption ---------- */
+
+/*
+  Two lanes running the same interrupted slide, one inheriting the velocity it
+  was already travelling at and one starting from rest. The comparison is the
+  demo: a single redirected element looks fine on its own, and only next to the
+  one that stops dead does the difference read.
+*/
+.lanes {
+  display: flex;
+  gap: 44px;
+  align-items: flex-start;
+}
+.lane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+/*
+  A fixed-height track. The boxes are moved with transforms, which do not affect
+  layout, but the labels sit under them and a track that sized itself to its
+  content would still shift if anything ever changed.
+*/
+.lane-track {
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lane-label {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.lane-label b {
+  display: block;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.stage--large .lanes {
+  gap: 84px;
+}
+.stage--large .lane-track {
+  height: 150px;
+}
+.stage--large .lane-label {
+  font-size: 13px;
+}

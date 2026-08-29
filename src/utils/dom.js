@@ -7,6 +7,8 @@
  * @module utils/dom
  */
 
+import { record } from '../core/registry.js';
+
 /**
  * An element with an inline style object — HTML, SVG, and MathML all qualify.
  * `Element` alone does not, which matters because `drawSVG` animates SVG nodes
@@ -182,6 +184,15 @@ export function setTransform(el, parts) {
   Object.assign(state, parts);
   transforms.set(el, state);
 
+  // Only the channels this call actually named. Sampling all eleven every frame
+  // would be an order of magnitude more bookkeeping than any real animation
+  // needs — presets touch one or two — and the untouched ones have not moved,
+  // so a sample of them would just restate the previous frame.
+  for (const key in parts) {
+    const value = /** @type {*} */ (parts)[key];
+    if (typeof value === 'number') record(el, key, value);
+  }
+
   const { x, y, z, rotate, rotateX, rotateY, scale, scaleX, scaleY, skewX, skewY } = state;
   const sx = scaleX !== 1 ? scaleX : scale;
   const sy = scaleY !== 1 ? scaleY : scale;
@@ -217,4 +228,64 @@ export function setTransform(el, parts) {
 export function clearTransform(el) {
   transforms.delete(el);
   el.style.transform = '';
+}
+
+/**
+ * Per-element opacity state.
+ *
+ * Kept alongside the transform store for the same reason it exists: reading
+ * back what this library last wrote is more reliable than parsing
+ * `el.style.opacity`, which is a string, may be empty, and may have been set by
+ * something else entirely. An animation that starts from an element's current
+ * opacity needs a number it can trust.
+ *
+ * @type {WeakMap<StyledElement, number>}
+ */
+const opacities = new WeakMap();
+
+/**
+ * Reads the opacity this library last applied. Falls back to the inline style,
+ * then to 1 — a fully opaque element is what the browser shows for an element
+ * nobody has faded.
+ *
+ * It does not consult the cascade: an element made translucent by a stylesheet
+ * reads as 1 here, because this is a record of what has been animated rather
+ * than a computed style.
+ *
+ * @param {StyledElement} el
+ * @returns {number}
+ */
+export function getOpacity(el) {
+  const stored = opacities.get(el);
+  if (stored !== undefined) return stored;
+  const inline = Number.parseFloat(el.style.opacity);
+  return Number.isFinite(inline) ? inline : 1;
+}
+
+/**
+ * Writes an opacity and records it as an animated channel.
+ *
+ * Presets use this rather than assigning `el.style.opacity` directly, so that
+ * fades take part in velocity tracking and channel ownership the same way
+ * transforms do.
+ *
+ * @param {StyledElement} el
+ * @param {number} value
+ * @returns {void}
+ */
+export function setOpacity(el, value) {
+  opacities.set(el, value);
+  el.style.opacity = String(round(value));
+  record(el, 'opacity', value);
+}
+
+/**
+ * Removes the inline opacity and forgets the element's state.
+ *
+ * @param {StyledElement} el
+ * @returns {void}
+ */
+export function clearOpacity(el) {
+  opacities.delete(el);
+  el.style.opacity = '';
 }

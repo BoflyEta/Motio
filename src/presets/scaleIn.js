@@ -5,7 +5,7 @@
  */
 
 import { elementTween } from './shared.js';
-import { setTransform, clearTransform } from '../utils/dom.js';
+import { setTransform, clearTransform, setOpacity } from '../utils/dom.js';
 
 /**
  * @typedef {import('../utils/dom.js').Target} Target
@@ -51,10 +51,11 @@ export function scaleIn(target, options = {}) {
         el.style.transformOrigin = origin;
       }
       setTransform(el, { scale: from + (to - from) * eased });
-      if (fade) el.style.opacity = String(eased);
+      if (fade) setOpacity(el, eased);
     },
     {
       willChange: fade ? ['transform', 'opacity'] : ['transform'],
+      channels: fade ? ['scale', 'opacity'] : ['scale'],
       finalize: (el) => {
         // Only strip the transform when it ends at identity. A scaleIn that
         // settles at 1.2 is a deliberate final state and must survive.

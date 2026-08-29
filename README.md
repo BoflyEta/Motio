@@ -10,8 +10,9 @@
 [![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
 **Zero runtime dependencies.** One shared `requestAnimationFrame` loop, presets that touch only
-`transform` and `opacity`, FLIP for layout changes, and reduced motion handled rather than bolted
-on. 9.7 kB gzipped for all of it; 5.1 kB if you import three presets, because it tree-shakes.
+`transform` and `opacity`, FLIP for layout changes, interruptions that carry an element's real
+velocity into the animation that replaces them, and reduced motion handled rather than bolted on.
+10.7 kB gzipped for all of it; 5.6 kB if you import three presets, because it tree-shakes.
 
 ## Why I built this
 
@@ -71,6 +72,20 @@ const controls = spring('.badge', {
 
 controls.duration; // e.g. 812 — derived, not chosen
 ```
+
+**interruption** — `from: 'current'` starts from wherever the element is, and `velocity: 'inherit'`
+starts at whatever speed it is already moving. Grab a card mid-slide and it redirects instead of
+stopping dead for a frame.
+
+```js
+slideIn('.card', { direction: 'up', distance: 120, duration: 800 });
+
+card.addEventListener('pointerdown', () => {
+  spring('.card', { from: 'current', to: { y: 0 }, velocity: 'inherit' });
+});
+```
+
+`velocityOf(el, 'y')` reports the same measurement directly, in pixels per second.
 
 **flipList** — animate a reorder, filter, or insertion using only transforms.
 
@@ -268,6 +283,52 @@ timeline of forty staggered elements costs exactly one ticker subscription, and 
 sequence can be paused, reversed, scrubbed to 40%, or bound to scroll — because none of the
 children own any time of their own.
 
+### Interruption, and why velocity has to be measured
+
+An animation library that only knows how to start from a declared value cannot handle being
+interrupted. Grab a card halfway through a `slideIn` and spring it somewhere else, and the spring
+begins where it was told to begin, at a velocity of zero. The card stops dead for one frame and
+sets off again. It reads as a glitch, because nothing physical changes direction by first coming
+to a halt.
+
+Fixing it needs two things the library did not have. The first is a velocity, and a velocity can
+only be measured, not declared: it is a property of what the element is doing right now, not of
+what any animation intended. So every write that goes through `setTransform` or `setOpacity` also
+records a timestamped sample, and `velocityOf(el, 'y')` differentiates them. The measurement
+window matters more than it looks — differencing two consecutive frames divides a small position
+change by a jittery interval and produces a number that swings wildly, so the older sample is held
+until it is at least 32ms old and the velocity is measured across two or three frames. An
+exponential filter would smooth it too, but it would also lag, and lag is exactly what ruins a
+handoff: it reports the speed from a moment ago rather than the speed now.
+
+The second is knowing who is allowed to write. `transform` is a single CSS property, so two
+animations both writing `y` fight for it every frame and the winner is whichever ticked last. Each
+preset now names the channels it writes, and claiming a channel displaces whoever held it. The
+granularity is per channel rather than per element on purpose: a magnetic hover writing `x`/`y` and
+a fade writing `opacity` are not in conflict and have to keep composing, which is the same reason
+`setTransform` merges through a shared store instead of overwriting.
+
+Displacement is per element, too, and that falls out of the stagger design. One tween drives a
+whole staggered list, so cancelling it because a single card was grabbed would freeze the other
+199 mid-flight. Instead the displaced animation stops writing that one element and carries on; when
+it loses its last element it cancels itself, which releases the ticker subscription and the
+`will-change` hints along with it.
+
+What the spring then does with the measurement is the part the precomputed-curve design made
+awkward. A spring here is simulated once up front and used as an easing curve, which is what lets
+it be scrubbed, reversed, and placed in a timeline — but a curve is fixed at creation, and elements
+interrupted at different points of a stagger are moving at different speeds and so want different
+curves. Each element therefore gets its own simulation, memoized on the velocity rounded to a
+hundredth, which collapses a 200-item list back to a handful of simulations without changing a
+visible frame. They settle at different times; the tween runs for the longest and each element's
+curve is stretched across that shared span so it reaches its own resting point on schedule and
+stays pinned there. The single-tween cost model survives intact.
+
+One honest limitation: the simulation moves a single scalar from 0 to 1, so it can carry exactly
+one velocity even when the element is moving on several channels. The channel with the furthest to
+travel is the one whose velocity is honoured, since it dominates what the motion looks like, and
+the rest ride the same curve.
+
 ### Reduced motion
 
 `prefers-reduced-motion: reduce` is a vestibular accessibility setting, not a taste preference;
@@ -332,7 +393,7 @@ lifecycle callbacks.
 | `fadeIn` / `fadeOut` | `from`, `to` |
 | `slideIn` | `direction`, `distance`, `fade` |
 | `scaleIn` | `from`, `to`, `fade`, `origin` |
-| `spring` | `from`, `to` (transform parts), `stiffness`, `damping`, `mass`, `velocity` |
+| `spring` | `from` (transform parts or `'current'`), `to`, `stiffness`, `damping`, `mass`, `velocity` (number or `'inherit'`) |
 | `flipList` | `mutate` (required), `scale` |
 | `drawSVG` | `from`, `to` (fractions), `reverse` |
 | `scrollScrub` | `from`, `to`, `onUpdate`, `startOffset`, `endOffset`, `root` |
@@ -360,7 +421,7 @@ All return exactly `0` at `t=0` and `1` at `t=1`, asserted with `Object.is` so a
 
 ### Ticker
 
-`subscribe(handler)`, `unsubscribe(handler)`, `activeCount()`, `stop()`. Handlers receive
+`subscribe(handler)`, `unsubscribe(handler)`, `activeCount()`, `frameTime()`, `stop()`. Handlers receive
 `(delta, timestamp)`. A handler that throws is removed from the loop and reported once, so one
 broken animation cannot stop the others or spam an error every frame.
 
@@ -369,12 +430,22 @@ broken animation cannot stop the others or spam an error every frame.
 `prefersReducedMotion()`, `setReducedMotion(true | false | null)`, `onReducedMotionChange(handler)`
 — the last returns an unsubscribe function and only fires when the *effective* value changes.
 
+### Motion state
+
+`velocityOf(el, channel)` reports how fast a channel is currently moving, in that channel's units
+per second — pixels for `x`/`y`/`z`, degrees for rotations, multiplier per second for `scale`,
+opacity per second for `opacity`. It returns 0 for anything standing still, never animated, or
+stopped long enough that its last samples describe history rather than motion. `forget(el)` drops
+an element's samples and channel claims, which matters for a recycled list row that is about to
+represent different data and should not inherit the outgoing row's momentum.
+
 ### Utilities
 
 `resolve(target)` normalizes any accepted target to an array of elements. `setTransform(el, parts)`
 merges translate / rotate / scale / skew through a shared per-element store so two presets on one
-element compose instead of overwriting each other. `getTransform`, `clearTransform`,
-`claimWillChange`, `clearWillChange`.
+element compose instead of overwriting each other, and records each written channel for velocity
+tracking. `setOpacity(el, value)` does the same for opacity. `getTransform`, `clearTransform`,
+`getOpacity`, `clearOpacity`, `claimWillChange`, `clearWillChange`.
 
 ## Browser support
 

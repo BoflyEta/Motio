@@ -6,6 +6,7 @@
 
 import { tween } from '../core/tween.js';
 import { resolveEasing } from '../core/easing.js';
+import { claim, release } from '../core/registry.js';
 import { resolve } from '../utils/dom.js';
 import { claimWillChange } from '../utils/willChange.js';
 
@@ -54,10 +55,22 @@ export const clamp01 = (value) => (value < 0 ? 0 : value > 1 ? 1 : value);
  * @typedef {object} DriverConfig
  * @property {readonly string[]} [willChange=['transform']] Properties to hint,
  *   claimed for the life of the animation.
+ * @property {readonly string[]} [channels=[]] Transform channels and `opacity`
+ *   this preset writes, claimed per element. A later animation naming any of
+ *   the same channels takes those elements over; this one quietly stops writing
+ *   them. Leave empty to opt out of ownership entirely, which is right for
+ *   effects that write something else — `drawSVG` on a dash offset, `counter`
+ *   on text — and for continuous effects like `magneticHover` that should not
+ *   be evicted by a one-shot.
+ * @property {(el: StyledElement, index: number) => import('../core/easing.js').EasingFunction} [easingFor]
+ *   Supplies a distinct easing per element, resolved once at creation. Used by
+ *   `spring`, whose curve differs per element when each inherits its own
+ *   velocity. Overrides `easing`.
  * @property {(el: StyledElement, index: number) => void} [finalize] Called per
  *   element once the animation completes forwards, to strip whatever inline
  *   state the effect needed. Skipped when the tween ends anywhere but the end,
- *   since a cancelled or reversed animation has not reached its clean state.
+ *   since a cancelled or reversed animation has not reached its clean state,
+ *   and skipped for elements taken over by a later animation.
  *
  * @param {Target} target
  * @param {PresetOptions} options
@@ -67,7 +80,12 @@ export const clamp01 = (value) => (value < 0 ? 0 : value > 1 ? 1 : value);
  * @returns {import('../core/tween.js').TweenControls<number>}
  */
 export function elementTween(target, options, apply, config = {}) {
-  const { willChange: willChangeProperties = ['transform'], finalize } = config;
+  const {
+    willChange: willChangeProperties = ['transform'],
+    channels = [],
+    easingFor,
+    finalize,
+  } = config;
   const {
     duration = 600,
     stagger = 0,
@@ -83,6 +101,40 @@ export function elementTween(target, options, apply, config = {}) {
   const step = Math.abs(stagger);
   const span = count > 1 ? duration + step * (count - 1) : duration;
 
+  // Resolved once rather than per frame: a spring builds its curve from a
+  // sampled simulation, and rebuilding that sixty times a second per element
+  // would cost more than the animation it describes.
+  const eases = easingFor ? elements.map((el, i) => easingFor(el, i)) : null;
+
+  /**
+   * Which elements this animation is still allowed to write.
+   *
+   * A takeover has to be per element, not per animation: one tween drives the
+   * whole stagger, so cancelling it because a single card was grabbed would
+   * freeze the other 199 mid-flight. Dropping just that card leaves the rest
+   * untouched.
+   */
+  const writable = new Uint8Array(count).fill(1);
+  let writableCount = count;
+
+  /** @type {Map<StyledElement, number>} */
+  const indices = new Map();
+  for (let i = 0; i < count; i += 1) indices.set(elements[i], i);
+
+  /** @type {import('../core/registry.js').Owner} */
+  const owner = {
+    disown(el) {
+      const index = indices.get(/** @type {StyledElement} */ (el));
+      if (index === undefined || writable[index] === 0) return;
+      writable[index] = 0;
+      writableCount -= 1;
+      // Every element has been taken over, so the remaining frames would
+      // compute values nobody reads. Stopping releases the ticker subscription
+      // and settles `finished`, which is what frees the will-change hints.
+      if (writableCount === 0) controls.cancel();
+    },
+  };
+
   const controls = tween({
     ...rest,
     from: 0,
@@ -92,26 +144,39 @@ export function elementTween(target, options, apply, config = {}) {
     onUpdate: (progress, _linear, self) => {
       const elapsed = progress * span;
       for (let i = 0; i < count; i += 1) {
+        if (writable[i] === 0) continue;
         const offset = stagger >= 0 ? i * step : (count - 1 - i) * step;
         const local = duration > 0 ? clamp01((elapsed - offset) / duration) : 1;
-        apply(elements[i], ease(local), i);
+        apply(elements[i], (eases ? eases[i] : ease)(local), i);
       }
       if (onUpdate) onUpdate(progress, self);
     },
     onComplete: (self) => {
       if (finalize && self.progress === 1) {
-        for (let i = 0; i < count; i += 1) finalize(elements[i], i);
+        for (let i = 0; i < count; i += 1) {
+          if (writable[i] === 1) finalize(elements[i], i);
+        }
       }
       if (onComplete) onComplete(self);
     },
   });
 
+  if (count > 0 && channels.length > 0) {
+    for (const el of elements) claim(el, channels, owner);
+    // Claims are given up on `finished`, which settles on completion and on
+    // cancel alike. Holding them past that would let a finished animation keep
+    // evicting its successors from channels it no longer writes.
+    controls.finished.then(() => {
+      for (const el of elements) release(el, channels, owner);
+    });
+  }
+
   if (count > 0 && willChangeProperties.length > 0) {
-    const release = claimWillChange(elements, willChangeProperties);
+    const releaseHint = claimWillChange(elements, willChangeProperties);
     // `finished` settles on completion *and* on cancel, which is exactly the
     // set of ways an animation can stop. Hanging the release off onComplete
     // alone would leak a compositor layer for every cancelled animation.
-    controls.finished.then(release);
+    controls.finished.then(releaseHint);
   }
 
   return controls;

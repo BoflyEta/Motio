@@ -5,6 +5,7 @@
  */
 
 import { elementTween } from './shared.js';
+import { setOpacity } from '../utils/dom.js';
 
 /**
  * @typedef {import('../utils/dom.js').Target} Target
@@ -15,7 +16,7 @@ import { elementTween } from './shared.js';
  * @typedef {PresetOptions & { from?: number, to?: number }} FadeOptions
  */
 
-const OPACITY_ONLY = { willChange: ['opacity'] };
+const OPACITY_ONLY = { willChange: ['opacity'], channels: ['opacity'] };
 
 /**
  * Fades elements in.
@@ -33,7 +34,7 @@ export function fadeIn(target, options = {}) {
     target,
     rest,
     (el, eased) => {
-      el.style.opacity = String(from + (to - from) * eased);
+      setOpacity(el, from + (to - from) * eased);
     },
     OPACITY_ONLY,
   );
@@ -54,7 +55,7 @@ export function fadeOut(target, options = {}) {
     target,
     rest,
     (el, eased) => {
-      el.style.opacity = String(from + (to - from) * eased);
+      setOpacity(el, from + (to - from) * eased);
     },
     OPACITY_ONLY,
   );

@@ -183,6 +183,23 @@ export function unsubscribe(handler) {
 }
 
 /**
+ * The timestamp every handler in the current frame shares, or the present
+ * moment when no frame is running.
+ *
+ * Inside a tick this is the frame's own timestamp, which is what makes it
+ * useful: every subscriber that reads it during a frame gets the same number,
+ * so per-element measurements taken across a stagger are comparable rather than
+ * each carrying its own microseconds of drift. Outside a tick — a click handler
+ * starting an animation, say — the last frame's timestamp is simply stale, and
+ * real time is the honest answer.
+ *
+ * @returns {number} Milliseconds on the same base as `performance.now()`.
+ */
+export function frameTime() {
+  return ticking ? lastTime : now();
+}
+
+/**
  * Number of handlers the next frame will run. Counts pending changes, so the
  * value is correct even when read from inside a tick.
  *

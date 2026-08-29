@@ -40,7 +40,9 @@ export {
   resolveEasing,
 } from './core/easing.js';
 
-export { subscribe, unsubscribe, activeCount, stop } from './core/ticker.js';
+export { subscribe, unsubscribe, activeCount, frameTime, stop } from './core/ticker.js';
+
+export { velocityOf, forget } from './core/registry.js';
 
 export { prefersReducedMotion, setReducedMotion, onReducedMotionChange } from './core/motion.js';
 
@@ -48,7 +50,15 @@ export { tween } from './core/tween.js';
 
 export { timeline } from './core/timeline.js';
 
-export { resolve, setTransform, getTransform, clearTransform } from './utils/dom.js';
+export {
+  resolve,
+  setTransform,
+  getTransform,
+  clearTransform,
+  setOpacity,
+  getOpacity,
+  clearOpacity,
+} from './utils/dom.js';
 
 export { claimWillChange, clearWillChange } from './utils/willChange.js';
 
@@ -70,6 +80,7 @@ export { counter } from './presets/counter.js';
  * @typedef {import('./core/easing.js').EasingName} EasingName
  * @typedef {import('./core/easing.js').EasingInput} EasingInput
  * @typedef {import('./core/ticker.js').TickHandler} TickHandler
+ * @typedef {import('./core/registry.js').Owner} Owner
  * @typedef {import('./core/motion.js').ReducedMotionHandler} ReducedMotionHandler
  * @typedef {import('./core/tween.js').TweenValue} TweenValue
  * @typedef {import('./core/timeline.js').TimelineControls} TimelineControls
