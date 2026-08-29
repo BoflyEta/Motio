@@ -39,6 +39,16 @@ jobs:
           fi
 
       # prepublishOnly lints and tests; prepack builds dist/ into the tarball.
+      # The npm token must be configured in the repository settings for this workflow.
+      - name: Check npm auth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "Missing NPM_TOKEN secret. Add it in GitHub > Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       - name: Publish
         run: npm publish --provenance --access public
         env:
